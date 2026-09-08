@@ -16,6 +16,7 @@ export type PresenceSession = {
 
   userId: string;
   nodeId: string;
+  seasonId: string;
 
   status: PresenceSessionStatus;
 

@@ -12,9 +12,12 @@ export type Node = {
 
   wifiPublicIp: string | null;
 
+  gracePeriodSeconds: number;
+
   timezone: string;
 
   isRankingVisible: boolean;
+  isActive: boolean;
 
   createdAt: string;
   updatedAt: string;
