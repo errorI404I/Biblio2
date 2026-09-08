@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
-
 import { getAdminNodeById } from "@/lib/api/nodes";
+import { NodeScheduleManager } from "@/components/admin/NodeScheduleManager";
+import { getNodeScheduleIntervals } from "@/lib/api/schedules";
+import { EditNodeForm } from "@/components/admin/EditNodeForm";
 
 type AdminNodePageProps = {
   params: Promise<{
@@ -18,8 +20,11 @@ export default async function AdminNodePage({
   if (!node) {
     notFound();
   }
+  const intervals =
+  await getNodeScheduleIntervals(nodeId);
 
   return (
+    
     <div className="max-w-4xl">
       <div className="mb-6">
         <h2 className="text-3xl font-bold text-slate-900">
@@ -72,6 +77,22 @@ export default async function AdminNodePage({
           </p>
         </section>
 
+        <section className="mt-8">
+        <div className="mb-4">
+            <h3 className="text-xl font-semibold text-slate-900">
+            Horarios
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-600">
+            Definí los intervalos en los que se permite registrar presencia.
+            </p>
+        </div>
+
+        <NodeScheduleManager
+            nodeId={node.id}
+            intervals={intervals}
+        />
+        </section>
         <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-slate-900">
             Ranking
@@ -124,6 +145,14 @@ export default async function AdminNodePage({
           </div>
         </section>
       )}
+      <section className="mt-8">
+    <h3 className="mb-4 text-xl font-semibold text-slate-900">
+        Editar configuración
+    </h3>
+
+        <EditNodeForm node={node} />
+    </section>
     </div>
+    
   );
 }
