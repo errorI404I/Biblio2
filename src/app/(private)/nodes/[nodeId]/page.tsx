@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getNodeScheduleStatus } from "@/lib/api/schedules";
+import { NodeInvitationManager } from "@/components/admin/NodeInvitationManager";
+import { getActiveNodeInvitation } from "@/lib/api/invitations";
 
 import { getUserNodeById } from "@/lib/api/nodes";
 
@@ -19,6 +21,10 @@ export default async function NodeDetailPage({
   if (!node) {
     notFound();
   }
+
+  const invitation =
+  await getActiveNodeInvitation(nodeId);
+
   const scheduleStatus =
   await getNodeScheduleStatus(nodeId);
 
@@ -46,7 +52,13 @@ export default async function NodeDetailPage({
             {node.isActive ? "Activo" : "Desactivado"}
           </p>
         </section>
-
+        <section className="mt-8">
+          <NodeInvitationManager
+            nodeId={node.id}
+            invitation={invitation}
+          />
+        </section>
+        
         <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-slate-900">
             Tu rol
