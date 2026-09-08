@@ -13,9 +13,9 @@ export default async function DashboardPage() {
         Dashboard
       </h1>
 
-      <pre className="mt-4">
-        {JSON.stringify(user, null, 2)}
-      </pre>
+     <p className="mt-4">
+    Sesión iniciada como {user?.email}
+     </p>
     </main>
   );
 }
