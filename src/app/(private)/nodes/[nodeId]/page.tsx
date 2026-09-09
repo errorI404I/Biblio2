@@ -30,19 +30,19 @@ export default async function NodeDetailPage({
   if (!node) {
     notFound();
   }
-
-  const currentSession =
-    await getCurrentOpenPresenceSession();
-
-  const scheduleStatus =
-    await getNodeScheduleStatus(nodeId);
-
-  const ranking = node.isRankingVisible
-    ? await getNodeRanking(nodeId)
-    : [];
-
-  const streak =
-    await getUserNodeStreak(nodeId);
+  const [
+  currentSession,
+  scheduleStatus,
+  ranking,
+  streak,
+] = await Promise.all([
+  getCurrentOpenPresenceSession(),
+  getNodeScheduleStatus(nodeId),
+  node.isRankingVisible
+    ? getNodeRanking(nodeId)
+    : Promise.resolve([]),
+  getUserNodeStreak(nodeId),
+]);
 
   return (
     <div className="max-w-3xl">
