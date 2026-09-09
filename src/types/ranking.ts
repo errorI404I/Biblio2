@@ -15,18 +15,9 @@ export type NodeSeason = {
   createdAt: string;
   updatedAt: string;
 };
-
 export type NodeRankingEntry = {
-  id: string;
-
-  nodeId: string;
-  seasonId: string;
   userId: string;
-
+  displayName: string;
+  avatarUrl: string | null;
   totalSeconds: number;
-
-  currentStreakDays: number;
-
-  createdAt: string;
-  updatedAt: string;
 };

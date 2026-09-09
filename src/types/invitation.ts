@@ -18,3 +18,9 @@ export type NodeInvitation = {
 
   createdAt: string;
 };
+export type PublicNodeInvitation = {
+  nodeId: string;
+  nodeName: string;
+  nodeDescription: string | null;
+  expiresAt: string | null;
+};

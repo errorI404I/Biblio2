@@ -2,19 +2,42 @@
 
 import { createClient } from "@/lib/supabase/client";
 
-export function GoogleLoginButton() {
+type GoogleLoginButtonProps = {
+  next?: string;
+};
+
+export function GoogleLoginButton({
+  next,
+}: GoogleLoginButtonProps) {
   const handleGoogleLogin = async () => {
     const supabase = createClient();
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    const callbackUrl = new URL(
+      "/auth/callback",
+      window.location.origin
+    );
+
+    if (next) {
+      callbackUrl.searchParams.set(
+        "next",
+        next
+      );
+    }
+
+    const { error } =
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo:
+            callbackUrl.toString(),
+        },
+      });
 
     if (error) {
-      console.error("Error al iniciar sesión con Google:", error);
+      console.error(
+        "Error al iniciar sesión con Google:",
+        error
+      );
     }
   };
 

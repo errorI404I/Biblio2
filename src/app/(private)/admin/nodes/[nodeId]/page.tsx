@@ -1,8 +1,14 @@
 import { notFound } from "next/navigation";
+import { ExportRankingButton } from "@/components/admin/ExportRankingButton";
+
 import { getAdminNodeById } from "@/lib/api/nodes";
-import { NodeScheduleManager } from "@/components/admin/NodeScheduleManager";
 import { getNodeScheduleIntervals } from "@/lib/api/schedules";
+import { getActiveNodeInvitation } from "@/lib/api/invitations";
+
+import { NodeScheduleManager } from "@/components/admin/NodeScheduleManager";
 import { EditNodeForm } from "@/components/admin/EditNodeForm";
+import { NodeInvitationManager } from "@/components/admin/NodeInvitationManager";
+import { requireNodeAdmin } from "@/lib/auth/permissions";
 
 type AdminNodePageProps = {
   params: Promise<{
@@ -14,17 +20,20 @@ export default async function AdminNodePage({
   params,
 }: AdminNodePageProps) {
   const { nodeId } = await params;
-
+  await requireNodeAdmin(nodeId);
   const node = await getAdminNodeById(nodeId);
 
   if (!node) {
     notFound();
   }
+
   const intervals =
-  await getNodeScheduleIntervals(nodeId);
+    await getNodeScheduleIntervals(nodeId);
+
+  const invitation =
+    await getActiveNodeInvitation(nodeId);
 
   return (
-    
     <div className="max-w-4xl">
       <div className="mb-6">
         <h2 className="text-3xl font-bold text-slate-900">
@@ -43,7 +52,9 @@ export default async function AdminNodePage({
           </h3>
 
           <p className="mt-2 text-slate-700">
-            {node.isActive ? "Activo" : "Desactivado"}
+            {node.isActive
+              ? "Activo"
+              : "Desactivado"}
           </p>
         </section>
 
@@ -73,33 +84,22 @@ export default async function AdminNodePage({
           </h3>
 
           <p className="mt-2 text-slate-700">
-            {Math.floor(node.gracePeriodSeconds / 60)} minutos
+            {Math.floor(
+              node.gracePeriodSeconds / 60
+            )}{" "}
+            minutos
           </p>
         </section>
 
-        <section className="mt-8">
-        <div className="mb-4">
-            <h3 className="text-xl font-semibold text-slate-900">
-            Horarios
-            </h3>
-
-            <p className="mt-1 text-sm text-slate-600">
-            Definí los intervalos en los que se permite registrar presencia.
-            </p>
-        </div>
-
-        <NodeScheduleManager
-            nodeId={node.id}
-            intervals={intervals}
-        />
-        </section>
         <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-slate-900">
             Ranking
           </h3>
 
           <p className="mt-2 text-slate-700">
-            {node.isRankingVisible ? "Visible" : "Oculto"}
+            {node.isRankingVisible
+              ? "Visible"
+              : "Oculto"}
           </p>
         </section>
       </div>
@@ -139,20 +139,67 @@ export default async function AdminNodePage({
           </h3>
 
           <div className="mt-2 space-y-1 text-slate-700">
-            <p>Latitud: {node.latitude}</p>
-            <p>Longitud: {node.longitude}</p>
-            <p>Radio configurado: {node.radiusMeters} m</p>
+            <p>
+              Latitud: {node.latitude}
+            </p>
+
+            <p>
+              Longitud: {node.longitude}
+            </p>
+
+            <p>
+              Radio configurado:{" "}
+              {node.radiusMeters} m
+            </p>
           </div>
         </section>
       )}
+      <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
+  <h3 className="font-semibold text-slate-900">
+    Exportar ranking
+  </h3>
+
+  <p className="mt-2 text-sm text-slate-600">
+    Descargá el ranking actual de la temporada activa en formato Excel.
+  </p>
+
+  <div className="mt-4">
+    <ExportRankingButton
+      nodeId={node.id}
+    />
+  </div>
+</section>
       <section className="mt-8">
-    <h3 className="mb-4 text-xl font-semibold text-slate-900">
-        Editar configuración
-    </h3>
+        <h3 className="mb-4 text-xl font-semibold text-slate-900">
+          Editar configuración
+        </h3>
 
         <EditNodeForm node={node} />
-    </section>
+      </section>
+
+      <section className="mt-8">
+        <div className="mb-4">
+          <h3 className="text-xl font-semibold text-slate-900">
+            Horarios
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-600">
+            Definí los intervalos en los que se permite registrar presencia.
+          </p>
+        </div>
+
+        <NodeScheduleManager
+          nodeId={node.id}
+          intervals={intervals}
+        />
+      </section>
+
+      <section className="mt-8">
+        <NodeInvitationManager
+          nodeId={node.id}
+          invitation={invitation}
+        />
+      </section>
     </div>
-    
   );
 }
