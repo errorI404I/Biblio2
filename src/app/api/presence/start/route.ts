@@ -84,6 +84,16 @@ export async function POST(request: Request) {
   const expectedIp =
     node.wifi_public_ip?.trim();
 
+  console.log(
+    "START OBSERVED IP:",
+    observedIp
+  );
+
+  console.log(
+    "START EXPECTED IP:",
+    expectedIp
+  );
+
   if (
     !expectedIp ||
     observedIp !== expectedIp

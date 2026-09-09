@@ -16,25 +16,48 @@ export async function updateSession(request: NextRequest) {
         },
 
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value);
-          });
+          cookiesToSet.forEach(
+            ({ name, value }) => {
+              request.cookies.set(name, value);
+            }
+          );
 
           response = NextResponse.next({
             request,
           });
 
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
+          cookiesToSet.forEach(
+            ({ name, value, options }) => {
+              response.cookies.set(
+                name,
+                value,
+                options
+              );
+            }
+          );
         },
       },
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data, error } =
+    await supabase.auth.getClaims();
 
-  return { response, user };
+  if (error) {
+    return {
+      response,
+      user: null,
+    };
+  }
+
+  const user = data?.claims
+    ? {
+        id: data.claims.sub,
+      }
+    : null;
+
+  return {
+    response,
+    user,
+  };
 }
