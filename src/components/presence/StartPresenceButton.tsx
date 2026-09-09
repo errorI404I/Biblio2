@@ -1,16 +1,25 @@
 "use client";
 
 import { useState } from "react";
-
-import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 type StartPresenceButtonProps = {
   nodeId: string;
 };
 
+type StartPresenceResponse = {
+  sessionId?: string;
+  status?: string;
+  error?: string;
+  message?: string;
+  observedIp?: string;
+};
+
 export function StartPresenceButton({
   nodeId,
 }: StartPresenceButtonProps) {
+  const router = useRouter();
+
   const [isStarting, setIsStarting] =
     useState(false);
 
@@ -21,30 +30,85 @@ export function StartPresenceButton({
     setMessage("");
     setIsStarting(true);
 
-    const supabase = createClient();
+    try {
+      const response = await fetch(
+        "/api/presence/start",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nodeId,
+          }),
+        }
+      );
 
-    const { data, error } = await supabase.rpc(
-      "start_presence_session",
-      {
-        p_node_id: nodeId,
+      const rawText = await response.text();
+
+console.log("START PRESENCE STATUS:", response.status);
+console.log("START PRESENCE BODY:", rawText);
+
+let result: StartPresenceResponse = {};
+
+try {
+  result = JSON.parse(rawText) as StartPresenceResponse;
+} catch {
+  setMessage(
+    `El servidor respondió con un formato inesperado (${response.status}). Revisá la terminal de Next.js.`
+  );
+  return;
+}
+
+      if (!response.ok) {
+        if (
+          result.error ===
+          "WIFI_VALIDATION_FAILED"
+        ) {
+          setMessage(
+            `No estás conectado a la red Wi-Fi válida. IP observada: ${
+              result.observedIp ?? "desconocida"
+            }`
+          );
+
+          return;
+        }
+
+        if (
+          result.error ===
+          "GPS_NOT_AVAILABLE_ON_WEB"
+        ) {
+          setMessage(
+            "Este nodo usa GPS y actualmente solo se puede iniciar presencia desde Android."
+          );
+
+          return;
+        }
+
+        setMessage(
+          result.message ??
+            result.error ??
+            "No se pudo iniciar la presencia."
+        );
+
+        return;
       }
-    );
 
-    setIsStarting(false);
+      setMessage("Presencia iniciada correctamente.");
 
-    if (error) {
+      router.refresh();
+    } catch (error) {
       console.error(
         "Error starting presence:",
         error
       );
 
-      setMessage(error.message);
-      return;
+      setMessage(
+        "No se pudo conectar con el servidor."
+      );
+    } finally {
+      setIsStarting(false);
     }
-
-    setMessage(
-      `Sesión iniciada: ${data}`
-    );
   };
 
   return (
@@ -56,7 +120,7 @@ export function StartPresenceButton({
         className="rounded-md bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-800 disabled:opacity-50"
       >
         {isStarting
-          ? "Iniciando..."
+          ? "Validando..."
           : "Conectarme"}
       </button>
 

@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getUserNodeStreak } from "@/lib/api/streaks";
 
+import { getUserNodeStreak } from "@/lib/api/streaks";
+import { NodeRanking } from "@/components/ranking/NodeRanking";
 import { getNodeScheduleStatus } from "@/lib/api/schedules";
 import { requireNodeMember } from "@/lib/auth/permissions";
 import { StartPresenceButton } from "@/components/presence/StartPresenceButton";
+import { EndPresenceButton } from "@/components/presence/EndPresenceButton";
 import { WifiHeartbeat } from "@/components/presence/WifiHeartbeat";
 import { getCurrentOpenPresenceSession } from "@/lib/api/presence";
 import { getUserNodeById } from "@/lib/api/nodes";
 import { getNodeRanking } from "@/lib/api/ranking";
-import { formatDuration } from "@/lib/utils/time";
 
 type NodeDetailPageProps = {
   params: Promise<{
@@ -41,9 +42,7 @@ export default async function NodeDetailPage({
     : [];
 
   const streak =
-  await getUserNodeStreak(nodeId);
-
-  
+    await getUserNodeStreak(nodeId);
 
   return (
     <div className="max-w-3xl">
@@ -66,21 +65,23 @@ export default async function NodeDetailPage({
           </p>
         )}
       </div>
-      <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-  <h3 className="font-semibold text-slate-900">
-    Racha actual
-  </h3>
 
-  <p className="mt-2 text-2xl font-bold text-slate-900">
-    {streak}
-  </p>
+      <section className="mb-6 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
+        <h3 className="font-semibold text-slate-900">
+          Racha actual
+        </h3>
 
-  <p className="mt-1 text-sm text-slate-600">
-    {streak === 1
-      ? "día obligatorio cumplido"
-      : "días obligatorios cumplidos"}
-  </p>
-</section>
+        <p className="mt-2 text-2xl font-bold text-slate-900">
+          {streak}
+        </p>
+
+        <p className="mt-1 text-sm text-slate-600">
+          {streak === 1
+            ? "día obligatorio cumplido"
+            : "días obligatorios cumplidos"}
+        </p>
+      </section>
+
       <section className="mb-6 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
         <h3 className="font-semibold text-slate-900">
           Presencia
@@ -107,6 +108,10 @@ export default async function NodeDetailPage({
             <p className="mt-1 text-sm text-slate-600">
               Estado: {currentSession.status}
             </p>
+
+            <EndPresenceButton
+              sessionId={currentSession.id}
+            />
           </div>
         ) : (
           <div className="mt-3">
@@ -232,37 +237,11 @@ export default async function NodeDetailPage({
           <p className="mt-2 text-sm text-slate-600">
             El ranking está oculto por el administrador.
           </p>
-        ) : ranking.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-600">
-            Todavía no hay datos de ranking.
-          </p>
         ) : (
-          <div className="mt-4 space-y-3">
-            {ranking.map((entry, index) => (
-              <div
-                key={entry.userId}
-                className="flex items-center justify-between rounded-md border border-slate-200 p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-6 font-semibold text-slate-700">
-                    {index + 1}.
-                  </span>
-
-                  <div>
-                    <p className="font-medium text-slate-900">
-                      {entry.displayName}
-                    </p>
-
-                    <p className="text-sm text-slate-500">
-                      {formatDuration(
-                        entry.totalSeconds
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <NodeRanking
+            nodeId={node.id}
+            initialRanking={ranking}
+          />
         )}
       </section>
     </div>

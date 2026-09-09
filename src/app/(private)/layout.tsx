@@ -1,13 +1,28 @@
-import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { createClient } from "@/lib/supabase/server";
 
 type PrivateLayoutProps = {
-  children: ReactNode;
+  children: React.ReactNode;
 };
 
-export default function PrivateLayout({
+export default async function PrivateLayout({
   children,
 }: PrivateLayoutProps) {
-  return <AppShell>{children}</AppShell>;
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  return (
+    <AppShell>
+      {children}
+    </AppShell>
+  );
 }

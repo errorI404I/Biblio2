@@ -9,6 +9,9 @@ import { NodeScheduleManager } from "@/components/admin/NodeScheduleManager";
 import { EditNodeForm } from "@/components/admin/EditNodeForm";
 import { NodeInvitationManager } from "@/components/admin/NodeInvitationManager";
 import { requireNodeAdmin } from "@/lib/auth/permissions";
+import { getActiveNodeSeason } from "@/lib/api/seasons";
+import { CloseSeasonForm } from "@/components/admin/CloseSeasonForm";
+import {getClosedNodeSeasons} from "@/lib/api/seasons";
 
 type AdminNodePageProps = {
   params: Promise<{
@@ -22,6 +25,8 @@ export default async function AdminNodePage({
   const { nodeId } = await params;
   await requireNodeAdmin(nodeId);
   const node = await getAdminNodeById(nodeId);
+  const activeSeason = await getActiveNodeSeason(nodeId);
+  const closedSeasons = await getClosedNodeSeasons(nodeId);
 
   if (!node) {
     notFound();
@@ -34,11 +39,51 @@ export default async function AdminNodePage({
     await getActiveNodeInvitation(nodeId);
 
   return (
+    
     <div className="max-w-4xl">
       <div className="mb-6">
         <h2 className="text-3xl font-bold text-slate-900">
           {node.name}
         </h2>
+        <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
+        <h3 className="font-semibold text-slate-900">
+          Temporada
+        </h3>
+
+        {!activeSeason ? (
+          <p className="mt-2 text-sm text-red-700">
+            Este nodo no tiene una temporada activa.
+          </p>
+        ) : (
+          <>
+            <div className="mt-3">
+              <p className="text-sm text-slate-600">
+                Temporada actual
+              </p>
+
+              <p className="font-medium text-slate-900">
+                {activeSeason.name}
+              </p>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Iniciada:{" "}
+                {new Date(
+                  activeSeason.startedAt
+                ).toLocaleString("es-AR", {
+                  timeZone: node.timezone,
+                })}
+              </p>
+            </div>
+
+            <CloseSeasonForm
+              nodeId={node.id}
+              currentSeasonName={
+                activeSeason.name
+              }
+            />
+          </>
+        )}
+      </section>
 
         <p className="mt-1 text-slate-600">
           Panel de administración del nodo
@@ -90,6 +135,49 @@ export default async function AdminNodePage({
             minutos
           </p>
         </section>
+        <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
+          <h3 className="font-semibold text-slate-900">
+            Histórico de temporadas
+          </h3>
+
+          {closedSeasons.length === 0 ? (
+            <p className="mt-2 text-sm text-slate-600">
+              Todavía no hay temporadas cerradas.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {closedSeasons.map((season) => (
+                <div
+                  key={season.id}
+                  className="flex items-center justify-between gap-4 rounded-md border border-slate-200 p-4"
+                >
+                  <div>
+                    <p className="font-medium text-slate-900">
+                      {season.name}
+                    </p>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      {new Date(
+                        season.startedAt
+                      ).toLocaleDateString("es-AR")}
+                      {" — "}
+                      {new Date(
+                        season.endedAt
+                      ).toLocaleDateString("es-AR")}
+                    </p>
+                  </div>
+
+                  <a
+                    href={`/api/admin/nodes/${node.id}/seasons/${season.id}/ranking-export`}
+                    className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                  >
+                    Descargar Excel
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-slate-900">
@@ -103,6 +191,7 @@ export default async function AdminNodePage({
           </p>
         </section>
       </div>
+
 
       {node.description && (
         <section className="mt-4 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
