@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ExportRankingButton } from "@/components/admin/ExportRankingButton";
+import { DeleteNodeButton } from "@/components/admin/DeleteNodeButton";
 
 import { getAdminNodeById } from "@/lib/api/nodes";
 import { getNodeScheduleIntervals } from "@/lib/api/schedules";
@@ -288,6 +289,24 @@ export default async function AdminNodePage({
           nodeId={node.id}
           invitation={invitation}
         />
+      </section>
+        <section className="mt-8 rounded-lg border border-red-200 bg-red-50 p-6">
+        <h3 className="text-xl font-semibold text-red-900">
+          Zona peligrosa
+        </h3>
+
+        <p className="mt-2 text-sm text-red-800">
+          Eliminar el nodo impedirá nuevas presencias y dejará
+          de aparecer como nodo activo. El historial existente
+          se conservará.
+        </p>
+
+        <div className="mt-4">
+          <DeleteNodeButton
+            nodeId={node.id}
+            nodeName={node.name}
+          />
+        </div>
       </section>
     </div>
   );

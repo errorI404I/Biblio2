@@ -16,7 +16,7 @@ export default async function LoginPage({
       <div className="space-y-6 text-center">
         <div>
           <h1 className="text-3xl font-bold">
-            Tracking Presence
+            Biblio2
           </h1>
 
           <p className="mt-2 text-gray-600">

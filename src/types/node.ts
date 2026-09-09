@@ -24,6 +24,32 @@ export type Node = {
 };
 import type { NodeRole } from "@/types/membership";
 
-export type UserNode = Node & {
-  role: NodeRole;
+export type UserNode = {
+  id: string;
+  name: string;
+  description: string | null;
+
+  validationMethod:
+    | "WIFI"
+    | "GPS";
+
+  latitude: number | null;
+  longitude: number | null;
+  radiusMeters: number | null;
+
+  wifiPublicIp: string | null;
+
+  gracePeriodSeconds: number;
+
+  timezone: string;
+
+  isRankingVisible: boolean;
+  isActive: boolean;
+
+  deletedAt: string | null;
+
+  createdAt: string;
+  updatedAt: string;
+
+  role: "ADMIN" | "MEMBER";
 };
