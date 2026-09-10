@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.trackingpresence.app",
+      "sha256_cert_fingerprints": [
+        "E8:84:2E:A4:46:AD:72:36:C4:88:EA:48:62:B0:0D:73:F2:2E:44:AD:17:61:4E:94:7D:71:F8:3D:0D:5F:D2:DF"
+      ]
+    }
+  }
+]
