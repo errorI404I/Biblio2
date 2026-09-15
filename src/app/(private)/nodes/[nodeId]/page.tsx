@@ -1,249 +1,39 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-
-import { getUserNodeStreak } from "@/lib/api/streaks";
 import { NodeRanking } from "@/components/ranking/NodeRanking";
-import { getNodeScheduleStatus } from "@/lib/api/schedules";
-import { requireNodeMember } from "@/lib/auth/permissions";
-import { StartPresenceButton } from "@/components/presence/StartPresenceButton";
-import { EndPresenceButton } from "@/components/presence/EndPresenceButton";
-import { WifiHeartbeat } from "@/components/presence/WifiHeartbeat";
-import { getCurrentOpenPresenceSession } from "@/lib/api/presence";
 import { getUserNodeById } from "@/lib/api/nodes";
 import { getNodeRanking } from "@/lib/api/ranking";
+import { getNodeScheduleStatus } from "@/lib/api/schedules";
+import { getActiveNodeSeason } from "@/lib/api/seasons";
+import { getUserNodeStreak } from "@/lib/api/streaks";
+import { requireNodeMember } from "@/lib/auth/permissions";
 
-type NodeDetailPageProps = {
-  params: Promise<{
-    nodeId: string;
-  }>;
-};
+type NodeDetailPageProps = { params: Promise<{ nodeId: string }> };
 
-export default async function NodeDetailPage({
-  params,
-}: NodeDetailPageProps) {
+export default async function NodeDetailPage({ params }: NodeDetailPageProps) {
   const { nodeId } = await params;
-
   await requireNodeMember(nodeId);
-
   const node = await getUserNodeById(nodeId);
-
-  if (!node) {
-    notFound();
-  }
-  const [
-  currentSession,
-  scheduleStatus,
-  ranking,
-  streak,
-] = await Promise.all([
-  getCurrentOpenPresenceSession(),
-  getNodeScheduleStatus(nodeId),
-  node.isRankingVisible
-    ? getNodeRanking(nodeId)
-    : Promise.resolve([]),
-  getUserNodeStreak(nodeId),
-]);
+  if (!node) notFound();
+  const [scheduleStatus, ranking, streak, activeSeason] = await Promise.all([
+    getNodeScheduleStatus(nodeId), node.isRankingVisible ? getNodeRanking(nodeId) : Promise.resolve([]), getUserNodeStreak(nodeId), getActiveNodeSeason(nodeId),
+  ]);
 
   return (
-    <div className="max-w-3xl">
-      {currentSession &&
-        currentSession.nodeId === node.id &&
-        node.validationMethod === "WIFI" && (
-          <WifiHeartbeat
-            sessionId={currentSession.id}
-          />
-        )}
-
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-slate-900">
-          {node.name}
-        </h2>
-
-        {node.description && (
-          <p className="mt-2 text-slate-600">
-            {node.description}
-          </p>
-        )}
-      </div>
-
-      <section className="mb-6 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-        <h3 className="font-semibold text-slate-900">
-          Racha actual
-        </h3>
-
-        <p className="mt-2 text-2xl font-bold text-slate-900">
-          {streak}
-        </p>
-
-        <p className="mt-1 text-sm text-slate-600">
-          {streak === 1
-            ? "día obligatorio cumplido"
-            : "días obligatorios cumplidos"}
-        </p>
-      </section>
-
-      <section className="mb-6 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-        <h3 className="font-semibold text-slate-900">
-          Presencia
-        </h3>
-
-        {!currentSession ? (
-          <>
-            <p className="mt-2 text-sm text-slate-600">
-              Iniciá una sesión de presencia en este nodo.
-            </p>
-
-            <div className="mt-4">
-              <StartPresenceButton
-                nodeId={node.id}
-              />
-            </div>
-          </>
-        ) : currentSession.nodeId === node.id ? (
-          <div className="mt-3">
-            <p className="font-medium text-green-700">
-              Tenés una sesión abierta en este nodo.
-            </p>
-
-            <p className="mt-1 text-sm text-slate-600">
-              Estado: {currentSession.status}
-            </p>
-
-            <EndPresenceButton
-              sessionId={currentSession.id}
-            />
-          </div>
-        ) : (
-          <div className="mt-3">
-            <p className="font-medium text-amber-700">
-              Ya tenés una sesión abierta en otro nodo.
-            </p>
-
-            <p className="mt-1 text-sm text-slate-600">
-              Nodo actual: {currentSession.nodeName}
-            </p>
-
-            <Link
-              href={`/nodes/${currentSession.nodeId}`}
-              className="mt-3 inline-block text-sm font-medium text-slate-900 underline"
-            >
-              Ir a la sesión actual
-            </Link>
-          </div>
-        )}
-      </section>
-
+    <div className="max-w-4xl space-y-6">
+      <div><div className="flex flex-wrap items-center gap-3"><h2 className="text-3xl font-bold text-slate-900">{node.name}</h2><span className={`rounded-full px-3 py-1 text-xs font-semibold ${node.isActive ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"}`}>{node.isActive ? "Activo" : "Desactivado"}</span></div>{node.description && <p className="mt-3 max-w-2xl text-slate-600">{node.description}</p>}</div>
+      <section className="rounded-xl border border-sky-200 bg-sky-50 p-5 text-sm text-sky-900">El registro de presencia se realiza exclusivamente desde la app móvil mediante GPS.</section>
       <div className="grid gap-4 md:grid-cols-2">
-        <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-          <h3 className="font-semibold text-slate-900">
-            Estado
-          </h3>
-
-          <p className="mt-2 text-slate-700">
-            {node.isActive
-              ? "Activo"
-              : "Desactivado"}
-          </p>
-        </section>
-
-        <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-          <h3 className="font-semibold text-slate-900">
-            Tu rol
-          </h3>
-
-          <p className="mt-2 text-slate-700">
-            {node.role}
-          </p>
-        </section>
-
-        <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-          <h3 className="font-semibold text-slate-900">
-            Estado horario
-          </h3>
-
-          {!scheduleStatus ? (
-            <p className="mt-2 text-slate-600">
-              No se pudo consultar el horario.
-            </p>
-          ) : scheduleStatus.isOpen ? (
-            <div className="mt-2">
-              <p className="font-medium text-green-700">
-                Abierto
-              </p>
-
-              <p className="mt-1 text-sm text-slate-600">
-                Intervalo actual:{" "}
-                {scheduleStatus.currentIntervalStart?.slice(0, 5)}
-                {" — "}
-                {scheduleStatus.currentIntervalEnd?.slice(0, 5)}
-              </p>
-            </div>
-          ) : (
-            <div className="mt-2">
-              <p className="font-medium text-red-700">
-                Cerrado
-              </p>
-
-              {scheduleStatus.nextOpenAt ? (
-                <p className="mt-1 text-sm text-slate-600">
-                  Próxima apertura:{" "}
-                  {new Date(
-                    scheduleStatus.nextOpenAt
-                  ).toLocaleString("es-AR", {
-                    timeZone: node.timezone,
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  })}
-                </p>
-              ) : (
-                <p className="mt-1 text-sm text-slate-600">
-                  No hay próximos horarios configurados.
-                </p>
-              )}
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-          <h3 className="font-semibold text-slate-900">
-            Método de validación
-          </h3>
-
-          <p className="mt-2 text-slate-700">
-            {node.validationMethod}
-          </p>
-        </section>
-
-        <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-          <h3 className="font-semibold text-slate-900">
-            Tolerancia de ausencia
-          </h3>
-
-          <p className="mt-2 text-slate-700">
-            {Math.floor(
-              node.gracePeriodSeconds / 60
-            )}{" "}
-            minutos
-          </p>
-        </section>
+        <InfoCard title="Tu racha" value={`${streak} ${streak === 1 ? "día" : "días"}`} detail="Días obligatorios cumplidos" />
+        <InfoCard title="Temporada actual" value={activeSeason?.name ?? "Sin temporada activa"} detail={activeSeason ? `Iniciada el ${new Date(activeSeason.startedAt).toLocaleDateString("es-AR")}` : "El administrador todavía no inició una temporada"} />
+        <InfoCard title="Tu rol" value={node.role === "ADMIN" ? "Administrador" : "Miembro"} detail="Los permisos efectivos dependen de tu rol y de las políticas de seguridad" />
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">Horario</h3>{!scheduleStatus ? <p className="mt-2 font-semibold text-slate-900">No disponible</p> : scheduleStatus.isOpen ? <><p className="mt-2 text-xl font-bold text-emerald-700">Abierto</p><p className="mt-1 text-sm text-slate-600">Intervalo actual: {scheduleStatus.currentIntervalStart?.slice(0, 5)} — {scheduleStatus.currentIntervalEnd?.slice(0, 5)}</p></> : <><p className="mt-2 text-xl font-bold text-red-700">Cerrado</p><p className="mt-1 text-sm text-slate-600">{scheduleStatus.nextOpenAt ? `Próxima apertura: ${new Date(scheduleStatus.nextOpenAt).toLocaleString("es-AR", { timeZone: node.timezone, dateStyle: "short", timeStyle: "short" })}` : "No hay próximos horarios configurados"}</p></>}</section>
       </div>
-
-      <section className="mt-6 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-        <h3 className="font-semibold text-slate-900">
-          Ranking
-        </h3>
-
-        {!node.isRankingVisible ? (
-          <p className="mt-2 text-sm text-slate-600">
-            El ranking está oculto por el administrador.
-          </p>
-        ) : (
-          <NodeRanking
-            nodeId={node.id}
-            initialRanking={ranking}
-          />
-        )}
-      </section>
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="font-semibold text-slate-900">Información básica</h3><dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2"><div><dt className="text-slate-500">Zona horaria</dt><dd className="mt-1 font-medium text-slate-900">{node.timezone}</dd></div><div><dt className="text-slate-500">Ubicación</dt><dd className="mt-1 font-medium text-slate-900">Configurada mediante GPS</dd></div></dl></section>
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="font-semibold text-slate-900">Ranking</h3>{!node.isRankingVisible ? <p className="mt-2 text-sm text-slate-600">El ranking está oculto por el administrador.</p> : <NodeRanking nodeId={node.id} initialRanking={ranking} />}</section>
     </div>
   );
+}
+
+function InfoCard({ title, value, detail }: { title: string; value: string; detail: string }) {
+  return <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h3 className="text-sm font-medium text-slate-500">{title}</h3><p className="mt-2 text-xl font-bold text-slate-900">{value}</p><p className="mt-1 text-sm text-slate-600">{detail}</p></section>;
 }

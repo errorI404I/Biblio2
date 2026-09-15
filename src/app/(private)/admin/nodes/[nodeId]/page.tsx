@@ -106,11 +106,11 @@ export default async function AdminNodePage({
 
         <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-slate-900">
-            Método de validación
+            Ubicación
           </h3>
 
           <p className="mt-2 text-slate-700">
-            {node.validationMethod}
+            GPS
           </p>
         </section>
 
@@ -206,24 +206,7 @@ export default async function AdminNodePage({
         </section>
       )}
 
-      {node.validationMethod === "WIFI" && (
-        <section className="mt-4 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-          <h3 className="font-semibold text-slate-900">
-            Configuración Wi-Fi
-          </h3>
-
-          <p className="mt-2 text-slate-700">
-            IP pública configurada:
-          </p>
-
-          <code className="mt-2 inline-block rounded bg-slate-100 px-2 py-1 text-sm text-slate-900">
-            {node.wifiPublicIp}
-          </code>
-        </section>
-      )}
-
-      {node.validationMethod === "GPS" && (
-        <section className="mt-4 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
+      <section className="mt-4 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-slate-900">
             Configuración GPS
           </h3>
@@ -243,7 +226,6 @@ export default async function AdminNodePage({
             </p>
           </div>
         </section>
-      )}
       <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
   <h3 className="font-semibold text-slate-900">
     Exportar ranking

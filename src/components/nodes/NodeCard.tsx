@@ -31,13 +31,6 @@ export function NodeCard({
 
       <div className="mt-4 space-y-1 text-sm text-slate-700">
         <p>
-          Validación:{" "}
-          <span className="font-medium">
-            {node.validationMethod}
-          </span>
-        </p>
-
-        <p>
           Estado:{" "}
           <span className="font-medium">
             {node.isActive ? "Activo" : "Desactivado"}

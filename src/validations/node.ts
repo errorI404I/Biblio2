@@ -12,13 +12,9 @@ const nodeBaseSchema = z.object({
     .trim()
     .max(300, "La descripción no puede superar los 300 caracteres"),
 
-  validationMethod: z.enum(["GPS", "WIFI"]),
-
   latitude: z.string(),
   longitude: z.string(),
   radiusMeters: z.string(),
-
-  wifiPublicIp: z.string().trim(),
 
   timezone: z
     .string()
@@ -37,59 +33,46 @@ function validateNodeConfiguration(
   values: z.infer<typeof nodeBaseSchema>,
   ctx: z.RefinementCtx
 ) {
-  if (values.validationMethod === "GPS") {
-    const latitude = Number(values.latitude);
-    const longitude = Number(values.longitude);
-    const radius = Number(values.radiusMeters);
+  const latitude = Number(values.latitude);
+  const longitude = Number(values.longitude);
+  const radius = Number(values.radiusMeters);
 
-    if (
-      values.latitude.trim() === "" ||
-      Number.isNaN(latitude) ||
-      latitude < -90 ||
-      latitude > 90
-    ) {
+  if (
+    values.latitude.trim() === "" ||
+    Number.isNaN(latitude) ||
+    latitude < -90 ||
+    latitude > 90
+  ) {
       ctx.addIssue({
         code: "custom",
         path: ["latitude"],
         message: "Ingresá una latitud válida entre -90 y 90",
       });
-    }
+  }
 
-    if (
-      values.longitude.trim() === "" ||
-      Number.isNaN(longitude) ||
-      longitude < -180 ||
-      longitude > 180
-    ) {
+  if (
+    values.longitude.trim() === "" ||
+    Number.isNaN(longitude) ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
       ctx.addIssue({
         code: "custom",
         path: ["longitude"],
         message: "Ingresá una longitud válida entre -180 y 180",
       });
-    }
+  }
 
-    if (
-      values.radiusMeters.trim() === "" ||
-      Number.isNaN(radius) ||
-      radius <= 0
-    ) {
+  if (
+    values.radiusMeters.trim() === "" ||
+    Number.isNaN(radius) ||
+    radius <= 0
+  ) {
       ctx.addIssue({
         code: "custom",
         path: ["radiusMeters"],
         message: "Ingresá un radio mayor que 0",
       });
-    }
-  }
-
-  if (
-    values.validationMethod === "WIFI" &&
-    values.wifiPublicIp.trim() === ""
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["wifiPublicIp"],
-      message: "La IP pública es obligatoria para un nodo Wi-Fi",
-    });
   }
 }
 

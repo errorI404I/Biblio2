@@ -37,11 +37,8 @@ export function AdminNodeCard({
           </span>
         </p>
 
-        <p>
-          Validación:{" "}
-          <span className="font-medium">
-            {node.validationMethod}
-          </span>
+        <p className="font-medium text-emerald-700">
+          Ubicación GPS configurada
         </p>
       </div>
 

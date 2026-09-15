@@ -22,8 +22,6 @@ export type Node = {
   createdAt: string;
   updatedAt: string;
 };
-import type { NodeRole } from "@/types/membership";
-
 export type UserNode = {
   id: string;
   name: string;
