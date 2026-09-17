@@ -93,16 +93,6 @@ export function UserMenu({
     router.refresh();
   }
 
-  function enterAdminMode() {
-    document.cookie =
-      "app_mode=admin; path=/; max-age=31536000; samesite=lax";
-
-    setOpen(false);
-
-    router.push("/admin");
-    router.refresh();
-  }
-
   function exitAdminMode() {
     document.cookie =
       "app_mode=user; path=/; max-age=31536000; samesite=lax";
@@ -190,15 +180,7 @@ export function UserMenu({
               Mi perfil
             </Link>
 
-            {!isAdminMode ? (
-              <button
-                type="button"
-                onClick={enterAdminMode}
-                className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100"
-              >
-                Entrar en modo administrador
-              </button>
-            ) : (
+            {isAdminMode && (
               <button
                 type="button"
                 onClick={exitAdminMode}

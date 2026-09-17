@@ -62,23 +62,7 @@ export async function AppShell({
               Biblio2
             </Link>
 
-            {!isAdminMode ? (
-              <nav className="hidden items-center gap-6 md:flex">
-                <Link
-                  href="/dashboard"
-                  className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
-                >
-                  Inicio
-                </Link>
-
-                <Link
-                  href="/nodes"
-                  className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
-                >
-                  Mis nodos
-                </Link>
-              </nav>
-            ) : (
+            {isAdminMode && (
               <nav className="hidden items-center gap-6 md:flex">
                 <Link
                   href="/admin"

@@ -1,18 +1,23 @@
 import { notFound } from "next/navigation";
+
 import { ExportRankingButton } from "@/components/admin/ExportRankingButton";
 import { DeleteNodeButton } from "@/components/admin/DeleteNodeButton";
+import { NodeScheduleManager } from "@/components/admin/NodeScheduleManager";
+import { EditNodeForm } from "@/components/admin/EditNodeForm";
+import { NodeInvitationManager } from "@/components/admin/NodeInvitationManager";
+import { CloseSeasonForm } from "@/components/admin/CloseSeasonForm";
+import { NodeApiKeysManager } from "@/components/admin/NodeApiKeysManager";
 
 import { getAdminNodeById } from "@/lib/api/nodes";
 import { getNodeScheduleIntervals } from "@/lib/api/schedules";
 import { getActiveNodeInvitation } from "@/lib/api/invitations";
+import {
+  getActiveNodeSeason,
+  getClosedNodeSeasons,
+} from "@/lib/api/seasons";
+import { getNodeApiKeys } from "@/lib/api/nodeApiKeys";
 
-import { NodeScheduleManager } from "@/components/admin/NodeScheduleManager";
-import { EditNodeForm } from "@/components/admin/EditNodeForm";
-import { NodeInvitationManager } from "@/components/admin/NodeInvitationManager";
 import { requireNodeAdmin } from "@/lib/auth/permissions";
-import { getActiveNodeSeason } from "@/lib/api/seasons";
-import { CloseSeasonForm } from "@/components/admin/CloseSeasonForm";
-import {getClosedNodeSeasons} from "@/lib/api/seasons";
 
 type AdminNodePageProps = {
   params: Promise<{
@@ -24,14 +29,20 @@ export default async function AdminNodePage({
   params,
 }: AdminNodePageProps) {
   const { nodeId } = await params;
+
   await requireNodeAdmin(nodeId);
+
   const node = await getAdminNodeById(nodeId);
-  const activeSeason = await getActiveNodeSeason(nodeId);
-  const closedSeasons = await getClosedNodeSeasons(nodeId);
 
   if (!node) {
     notFound();
   }
+
+  const activeSeason =
+    await getActiveNodeSeason(nodeId);
+
+  const closedSeasons =
+    await getClosedNodeSeasons(nodeId);
 
   const intervals =
     await getNodeScheduleIntervals(nodeId);
@@ -39,14 +50,22 @@ export default async function AdminNodePage({
   const invitation =
     await getActiveNodeInvitation(nodeId);
 
+  const apiKeys =
+    await getNodeApiKeys(nodeId);
+
   return (
-    
     <div className="max-w-4xl">
       <div className="mb-6">
         <h2 className="text-3xl font-bold text-slate-900">
           {node.name}
         </h2>
-        <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
+
+        <p className="mt-1 text-slate-600">
+          Panel de administración del nodo
+        </p>
+      </div>
+
+      <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
         <h3 className="font-semibold text-slate-900">
           Temporada
         </h3>
@@ -86,12 +105,7 @@ export default async function AdminNodePage({
         )}
       </section>
 
-        <p className="mt-1 text-slate-600">
-          Panel de administración del nodo
-        </p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
         <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-slate-900">
             Estado
@@ -136,6 +150,7 @@ export default async function AdminNodePage({
             minutos
           </p>
         </section>
+
         <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-slate-900">
             Histórico de temporadas
@@ -160,11 +175,15 @@ export default async function AdminNodePage({
                     <p className="mt-1 text-sm text-slate-500">
                       {new Date(
                         season.startedAt
-                      ).toLocaleDateString("es-AR")}
+                      ).toLocaleDateString(
+                        "es-AR"
+                      )}
                       {" — "}
                       {new Date(
                         season.endedAt
-                      ).toLocaleDateString("es-AR")}
+                      ).toLocaleDateString(
+                        "es-AR"
+                      )}
                     </p>
                   </div>
 
@@ -193,7 +212,6 @@ export default async function AdminNodePage({
         </section>
       </div>
 
-
       {node.description && (
         <section className="mt-4 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
           <h3 className="font-semibold text-slate-900">
@@ -207,40 +225,43 @@ export default async function AdminNodePage({
       )}
 
       <section className="mt-4 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-          <h3 className="font-semibold text-slate-900">
-            Configuración GPS
-          </h3>
+        <h3 className="font-semibold text-slate-900">
+          Configuración GPS
+        </h3>
 
-          <div className="mt-2 space-y-1 text-slate-700">
-            <p>
-              Latitud: {node.latitude}
-            </p>
+        <div className="mt-2 space-y-1 text-slate-700">
+          <p>
+            Latitud: {node.latitude}
+          </p>
 
-            <p>
-              Longitud: {node.longitude}
-            </p>
+          <p>
+            Longitud: {node.longitude}
+          </p>
 
-            <p>
-              Radio configurado:{" "}
-              {node.radiusMeters} m
-            </p>
-          </div>
-        </section>
-      <section className="rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
-  <h3 className="font-semibold text-slate-900">
-    Exportar ranking
-  </h3>
+          <p>
+            Radio configurado:{" "}
+            {node.radiusMeters} m
+          </p>
+        </div>
+      </section>
 
-  <p className="mt-2 text-sm text-slate-600">
-    Descargá el ranking actual de la temporada activa en formato Excel.
-  </p>
+      <section className="mt-4 rounded-lg border border-slate-300 bg-white p-5 shadow-sm">
+        <h3 className="font-semibold text-slate-900">
+          Exportar ranking
+        </h3>
 
-  <div className="mt-4">
-    <ExportRankingButton
-      nodeId={node.id}
-    />
-  </div>
-</section>
+        <p className="mt-2 text-sm text-slate-600">
+          Descargá el ranking actual de la temporada
+          activa en formato Excel.
+        </p>
+
+        <div className="mt-4">
+          <ExportRankingButton
+            nodeId={node.id}
+          />
+        </div>
+      </section>
+
       <section className="mt-8">
         <h3 className="mb-4 text-xl font-semibold text-slate-900">
           Editar configuración
@@ -256,7 +277,8 @@ export default async function AdminNodePage({
           </h3>
 
           <p className="mt-1 text-sm text-slate-600">
-            Definí los intervalos en los que se permite registrar presencia.
+            Definí los intervalos en los que se permite
+            registrar presencia.
           </p>
         </div>
 
@@ -272,15 +294,35 @@ export default async function AdminNodePage({
           invitation={invitation}
         />
       </section>
-        <section className="mt-8 rounded-lg border border-red-200 bg-red-50 p-6">
+
+      <section className="mt-8">
+        <div className="mb-4">
+          <h3 className="text-xl font-semibold text-slate-900">
+            API e integraciones
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-600">
+            Creá credenciales para permitir que
+            aplicaciones externas interactúen con este
+            nodo según los permisos que selecciones.
+          </p>
+        </div>
+
+        <NodeApiKeysManager
+          nodeId={node.id}
+          apiKeys={apiKeys}
+        />
+      </section>
+
+      <section className="mt-8 rounded-lg border border-red-200 bg-red-50 p-6">
         <h3 className="text-xl font-semibold text-red-900">
           Zona peligrosa
         </h3>
 
         <p className="mt-2 text-sm text-red-800">
-          Eliminar el nodo impedirá nuevas presencias y dejará
-          de aparecer como nodo activo. El historial existente
-          se conservará.
+          Eliminar el nodo impedirá nuevas presencias y
+          dejará de aparecer como nodo activo. El
+          historial existente se conservará.
         </p>
 
         <div className="mt-4">
