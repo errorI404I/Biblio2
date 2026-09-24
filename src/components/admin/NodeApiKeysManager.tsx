@@ -5,62 +5,34 @@ import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 import type { NodeApiKey } from "@/lib/api/nodeApiKeys";
+import {
+  PUBLIC_API_SCOPES,
+  type PublicApiScope,
+} from "@/lib/api/publicApiScopes";
 
 type Props = {
   nodeId: string;
   apiKeys: NodeApiKey[];
 };
 
-const AVAILABLE_SCOPES = [
-  {
-    value: "node:read",
-    label: "Leer información del nodo",
-  },
-  {
-    value: "schedule:read",
-    label: "Leer horarios",
-  },
-  {
-    value: "schedule:write",
-    label: "Modificar horarios",
-  },
-  {
-    value: "schedule_exceptions:read",
-    label: "Leer excepciones de horario",
-  },
-  {
-    value: "schedule_exceptions:write",
-    label: "Modificar excepciones de horario",
-  },
-  {
-    value: "theme:read",
-    label: "Leer diseño",
-  },
-  {
-    value: "theme:write",
-    label: "Modificar diseño",
-  },
-  {
-    value: "members:read",
-    label: "Leer miembros",
-  },
-  {
-    value: "invitations:read",
-    label: "Leer invitaciones",
-  },
-  {
-    value: "invitations:write",
-    label: "Gestionar invitaciones",
-  },
-  {
-    value: "ranking:read",
-    label: "Leer ranking",
-  },
-  {
-    value: "presence:read",
-    label: "Leer presencias",
-  },
-];
+const SCOPE_LABELS: Record<PublicApiScope, string> = {
+  "node:read": "Leer información del nodo",
+  "schedule:read": "Leer horarios",
+  "schedule:write": "Modificar horarios",
+  "schedule_exceptions:read": "Leer excepciones de horario",
+  "schedule_exceptions:write": "Modificar excepciones de horario",
+  "theme:read": "Leer diseño",
+  "theme:write": "Modificar diseño",
+  "members:read": "Leer miembros",
+  "invitations:read": "Leer invitaciones",
+  "invitations:write": "Gestionar invitaciones",
+  "ranking:read": "Leer ranking",
+  "presence:read": "Leer presencias",
+};
+
+const AVAILABLE_SCOPES = PUBLIC_API_SCOPES.map(
+  (value) => ({ value, label: SCOPE_LABELS[value] })
+);
 
 export function NodeApiKeysManager({
   nodeId,

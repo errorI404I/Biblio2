@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { EnterAdminModeLink } from "@/components/admin/EnterAdminModeLink";
 import { getCurrentUserAdminNodes, getCurrentUserNodes } from "@/lib/api/nodes";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,7 +20,11 @@ export default async function DashboardPage() {
       </div>
       <section className="grid gap-4 sm:grid-cols-2">
         <DashboardCard label="Nodos a los que pertenecés" count={nodes.length} href="/nodes" linkLabel="Ver mis nodos →" tone="emerald" />
-        <DashboardCard label="Nodos administrados" count={activeAdminNodes.length} href="/admin" linkLabel="Ir a administración →" tone="amber" />
+        <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">Nodos administrados</p>
+          <p className="mt-2 text-4xl font-bold text-slate-900">{activeAdminNodes.length}</p>
+          <EnterAdminModeLink />
+        </article>
       </section>
       <section className="rounded-xl border border-sky-200 bg-sky-50 p-6">
         <h3 className="font-semibold text-sky-950">La presencia se registra desde el móvil</h3>

@@ -3,11 +3,12 @@ import "server-only";
 import { createHash } from "crypto";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { PublicApiScope } from "@/lib/api/publicApiScopes";
 
 type AuthenticateNodeApiKeyParams = {
   request: Request;
   nodeId: string;
-  requiredScope: string;
+  requiredScope: PublicApiScope;
 };
 
 export type AuthenticatedApiKey = {
@@ -24,15 +25,87 @@ export type ApiKeyAuthResult =
     }
   | {
       ok: false;
-      status: 401 | 403;
+      status: 401 | 403 | 429;
       error: string;
     };
+
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 60;
+const requestBuckets = new Map<
+  string,
+  { count: number; resetsAt: number }
+>();
+
+function consumeRateLimit(key: string, now: number) {
+  const current = requestBuckets.get(key);
+  if (!current || current.resetsAt <= now) {
+    requestBuckets.set(key, {
+      count: 1,
+      resetsAt: now + RATE_LIMIT_WINDOW_MS,
+    });
+    return false;
+  }
+  current.count += 1;
+  return current.count > RATE_LIMIT_MAX_REQUESTS;
+}
+
+async function isRateLimited(
+  request: Request,
+  supabase: ReturnType<typeof createAdminClient>
+) {
+  const authorization =
+    request.headers.get("authorization") ?? "anonymous";
+  const forwardedFor =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  const ip = forwardedFor ?? realIp ?? "unknown";
+  const credentialHash = createHash("sha256")
+    .update(authorization)
+    .digest("hex");
+  const now = Date.now();
+
+  if (requestBuckets.size > 10_000) {
+    for (const [key, bucket] of requestBuckets) {
+      if (bucket.resetsAt <= now) requestBuckets.delete(key);
+    }
+  }
+
+  const fingerprints = [
+    createHash("sha256").update(`ip:${ip}`).digest("hex"),
+    createHash("sha256").update(`key:${credentialHash}`).digest("hex"),
+  ];
+
+  for (const fingerprint of fingerprints) {
+    const { data, error } = await supabase.rpc(
+      "consume_public_api_rate_limit",
+      {
+        p_fingerprint: fingerprint,
+        p_limit: RATE_LIMIT_MAX_REQUESTS,
+        p_window_seconds: RATE_LIMIT_WINDOW_MS / 1000,
+      }
+    );
+
+    if (!error && data === false) return true;
+    if (error && consumeRateLimit(fingerprint, now)) return true;
+  }
+
+  return false;
+}
 
 export async function authenticateNodeApiKey({
   request,
   nodeId,
   requiredScope,
 }: AuthenticateNodeApiKeyParams): Promise<ApiKeyAuthResult> {
+  const supabase = createAdminClient();
+
+  if (await isRateLimited(request, supabase)) {
+    return {
+      ok: false,
+      status: 429,
+      error: "Rate limit exceeded",
+    };
+  }
   const authorization =
     request.headers.get("authorization");
 
@@ -62,8 +135,6 @@ export async function authenticateNodeApiKey({
   const keyHash = createHash("sha256")
     .update(rawKey)
     .digest("hex");
-
-  const supabase = createAdminClient();
 
   const { data: apiKey, error } = await supabase
     .from("node_api_keys")
@@ -107,6 +178,21 @@ export async function authenticateNodeApiKey({
     };
   }
 
+  const { data: node, error: nodeError } = await supabase
+    .from("nodes")
+    .select("id")
+    .eq("id", nodeId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (nodeError || !node) {
+    return {
+      ok: false,
+      status: 403,
+      error: "Node is not available",
+    };
+  }
+
   const scopes: string[] =
     apiKey.scopes ?? [];
 
@@ -118,12 +204,19 @@ export async function authenticateNodeApiKey({
     };
   }
 
-  await supabase
+  const { error: usageError } = await supabase
     .from("node_api_keys")
     .update({
       last_used_at: new Date().toISOString(),
     })
     .eq("id", apiKey.id);
+
+  if (usageError) {
+    console.error(
+      "Error updating API key usage:",
+      usageError
+    );
+  }
 
   return {
     ok: true,

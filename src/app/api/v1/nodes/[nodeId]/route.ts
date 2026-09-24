@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
-
 import { authenticateNodeApiKey } from "@/lib/api/publicApiAuth";
+import { apiData, apiError } from "@/lib/api/publicApiResponse";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type RouteContext = {
@@ -22,14 +21,7 @@ export async function GET(
   });
 
   if (!auth.ok) {
-    return NextResponse.json(
-      {
-        error: auth.error,
-      },
-      {
-        status: auth.status,
-      }
-    );
+    return apiError(auth.error, auth.status);
   }
 
   const supabase = createAdminClient();
@@ -58,29 +50,14 @@ export async function GET(
       error
     );
 
-    return NextResponse.json(
-      {
-        error: "Could not read node",
-      },
-      {
-        status: 500,
-      }
-    );
+    return apiError("Could not read node", 500);
   }
 
   if (!node || node.deleted_at) {
-    return NextResponse.json(
-      {
-        error: "Node not found",
-      },
-      {
-        status: 404,
-      }
-    );
+    return apiError("Node not found", 404);
   }
 
-  return NextResponse.json({
-    data: {
+  return apiData({
       id: node.id,
       name: node.name,
       description: node.description,
@@ -100,6 +77,5 @@ export async function GET(
 
       isRankingVisible:
         node.is_ranking_visible,
-    },
   });
 }

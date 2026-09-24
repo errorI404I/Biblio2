@@ -38,20 +38,19 @@ export default async function AdminNodePage({
     notFound();
   }
 
-  const activeSeason =
-    await getActiveNodeSeason(nodeId);
-
-  const closedSeasons =
-    await getClosedNodeSeasons(nodeId);
-
-  const intervals =
-    await getNodeScheduleIntervals(nodeId);
-
-  const invitation =
-    await getActiveNodeInvitation(nodeId);
-
-  const apiKeys =
-    await getNodeApiKeys(nodeId);
+  const [
+    activeSeason,
+    closedSeasons,
+    intervals,
+    invitation,
+    apiKeys,
+  ] = await Promise.all([
+    getActiveNodeSeason(nodeId),
+    getClosedNodeSeasons(nodeId),
+    getNodeScheduleIntervals(nodeId),
+    getActiveNodeInvitation(nodeId),
+    getNodeApiKeys(nodeId),
+  ]);
 
   return (
     <div className="max-w-4xl">
