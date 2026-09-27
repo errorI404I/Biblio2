@@ -6,7 +6,11 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: biblio2-latest-release
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -29,13 +33,40 @@ jobs:
       - name: Build standalone application
         run: npm run build
 
+      - name: Prepare deployment package
+        run: |
+          mkdir -p deploy/.next/static
+          cp -a .next/standalone/. deploy/
+          cp -a .next/static/. deploy/.next/static/
+          cp -a public deploy/public
+          cd deploy
+          zip -qr ../biblio2-deploy.zip .
+
       - name: Upload deployment artifact
         uses: actions/upload-artifact@v4
         with:
           name: biblio2-deploy
-          path: |
-            .next/standalone/**
-            .next/static/**
-            public/**
+          path: deploy/**
           include-hidden-files: true
           if-no-files-found: error
+
+      - name: Create or update latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag --force latest "$GITHUB_SHA"
+          git push origin refs/tags/latest --force
+
+          if gh release view latest >/dev/null 2>&1; then
+            gh release edit latest \
+              --title "Latest deploy" \
+              --latest
+            gh release upload latest \
+              biblio2-deploy.zip \
+              --clobber
+          else
+            gh release create latest \
+              biblio2-deploy.zip \
+              --title "Latest deploy" \
+              --latest
+          fi
